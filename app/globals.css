@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
+@source "app/**/*.{js,ts,jsx,tsx,mdx}";
 
 :root {
   --background: #ffffff;
