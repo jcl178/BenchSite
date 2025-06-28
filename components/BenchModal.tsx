@@ -13,9 +13,14 @@ export default function BenchModal({ bench, onClose }: Props) {
       <button onClick={onClose} className="text-gray-600 hover:text-gray-800 float-right text-xl">&times;</button>
       <h2 className="text-2xl text-gray-800 font-bold mb-2">{bench.name}</h2>
       <p className="mb-4 text-gray-600">{bench.description}</p>
-      {bench.photos.map((photo, i) => (
-        <img key={i} src={photo} alt={bench.name} className="mb-2 rounded" />
-      ))}
+
+      {bench.image_url && (
+        <img
+          src={bench.image_url}
+          alt={bench.name}
+          className="mb-2 rounded shadow-md w-full"
+        />
+      )}
     </div>
   );
 }

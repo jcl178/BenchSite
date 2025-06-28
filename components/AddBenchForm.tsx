@@ -113,7 +113,11 @@ export default function AddBenchForm() {
       <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)}
         className="w-full mb-4" />
 
-      <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full">Add Bench</button>
+      <div className="flex gap-2">
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded flex-1">Add Bench</button>
+        <button type="button" onClick={() => router.push("/")} className="bg-gray-600 text-white px-4 py-2 rounded flex-1">Cancel</button>
+      </div>
+
 
       {message && <p className="mt-4 text-red-600">{message}</p>}
     </form>
