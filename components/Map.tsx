@@ -14,6 +14,7 @@ export default function Map({ onSelectBench, onHoverCoords }: MapProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
   const [benches, setBenches] = useState<Bench[]>([]);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -55,28 +56,43 @@ export default function Map({ onSelectBench, onHoverCoords }: MapProps) {
 
     setMap(newMap);
 
-    return () => newMap.remove();
+    return () => {
+      // Clean up markers
+      markersRef.current.forEach(marker => marker.remove());
+      markersRef.current = [];
+      newMap.remove();
+    };
   }, []);
 
   useEffect(() => {
     if (!map) return;
 
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
     benches.forEach((bench) => {
       const el = document.createElement("div");
       el.className = "marker";
-      el.style.width = "20px";
-      el.style.height = "20px";
-      el.style.borderRadius = "50%";
-      el.style.backgroundColor = "red";
+      el.style.width = "18px";
+      el.style.height = "30px";
+      el.style.background = "linear-gradient(180deg, #8b5cf6, #ef4444)"; // purple to red gradient
+      el.style.borderRadius = "50% 50% 50% 50% / 20% 20% 80% 80%";
       el.style.cursor = "pointer";
+      el.style.border = "2px solid white";
+      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+      el.style.position = "relative";
 
       el.addEventListener("click", () => {
         onSelectBench(bench);
       });
 
-      new mapboxgl.Marker(el)
+      const marker = new mapboxgl.Marker({ element: el, offset: [0, -30] })
         .setLngLat([bench.lng, bench.lat])
         .addTo(map);
+      
+      markersRef.current.push(marker);
     });
   }, [map, benches, onSelectBench]);
 

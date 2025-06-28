@@ -87,6 +87,7 @@ export default function MyBenchesPage() {
         if (sessionError || !sessionData.session) {
           console.error("No session found", sessionError);
           console.log("session.data", sessionData);
+          return;
         }
   
         const user = sessionData.session.user;
