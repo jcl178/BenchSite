@@ -5,4 +5,5 @@ export type Bench = {
     lng: number;
     image_url: string;
     description: string;
+    user_id: string;
   };

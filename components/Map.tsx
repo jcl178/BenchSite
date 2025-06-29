@@ -20,7 +20,7 @@ export default function Map({ onSelectBench, onHoverCoords }: MapProps) {
     const supabase = createClient();
 
     const loadBenches = async () => {
-      const { data, error } = await supabase.from("benches").select("*");
+      const { data, error } = await supabase.from("benches").select("*").eq("approved", true);
       if (error) {
         console.error("❌ Error fetching benches:", error);
         return;
