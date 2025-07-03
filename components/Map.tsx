@@ -71,30 +71,171 @@ export default function Map({ onSelectBench, onHoverCoords }: MapProps) {
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
-    // Add new markers
-    benches.forEach((bench) => {
-      const el = document.createElement("div");
-      el.className = "marker";
-      el.style.width = "18px";
-      el.style.height = "30px";
-      el.style.background = "linear-gradient(180deg, #8b5cf6, #ef4444)"; // purple to red gradient
-      el.style.borderRadius = "50% 50% 50% 50% / 20% 20% 80% 80%";
-      el.style.cursor = "pointer";
-      el.style.border = "2px solid white";
-      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-      el.style.position = "relative";
+    // Wait for map style to load before adding sources and layers
+    const addClustering = () => {
+      // Convert benches to GeoJSON format
+      const geojsonData = {
+        type: "FeatureCollection" as const,
+        features: benches.map((bench) => ({
+          type: "Feature" as const,
+          properties: {
+            id: bench.id,
+            name: bench.name,
+            description: bench.description,
+            image_url: bench.image_url,
+          },
+          geometry: {
+            type: "Point" as const,
+            coordinates: [bench.lng, bench.lat],
+          },
+        })),
+      };
 
-      el.addEventListener("click", () => {
-        onSelectBench(bench);
+      // Add source for clustering
+      if (map.getSource("benches")) {
+        (map.getSource("benches") as mapboxgl.GeoJSONSource).setData(geojsonData);
+      } else {
+        map.addSource("benches", {
+          type: "geojson",
+          data: geojsonData,
+          cluster: true,
+          clusterMaxZoom: 14, // Max zoom to cluster points on
+          clusterRadius: 50, // Radius of each cluster when clustering points
+        });
+
+        // Add cluster circles
+        map.addLayer({
+          id: "clusters",
+          type: "circle",
+          source: "benches",
+          filter: ["has", "point_count"],
+          paint: {
+            "circle-color": [
+              "step",
+              ["get", "point_count"],
+              "#51bbd6", // Color for small clusters
+              10,
+              "#f1f075", // Color for medium clusters
+              30,
+              "#f28cb1", // Color for large clusters
+            ],
+            "circle-radius": [
+              "step",
+              ["get", "point_count"],
+              20, // Radius for small clusters
+              10,
+              30, // Radius for medium clusters
+              30,
+              40, // Radius for large clusters
+            ],
+          },
+        });
+
+        // Add cluster count labels
+        map.addLayer({
+          id: "cluster-count",
+          type: "symbol",
+          source: "benches",
+          filter: ["has", "point_count"],
+          layout: {
+            "text-field": "{point_count_abbreviated}",
+            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+            "text-size": 12,
+          },
+          paint: {
+            "text-color": "#ffffff",
+          },
+        });
+
+        // Add individual points (unclustered green dots)
+        map.addLayer({
+          id: "unclustered-point",
+          type: "circle",
+          source: "benches",
+          filter: ["!", ["has", "point_count"]],
+          paint: {
+            "circle-color": "#22c55e", // Green color
+            "circle-radius": 8,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#fff",
+          },
+        });
+      }
+    };
+
+    // Only add clustering if map style is loaded
+    if (map.isStyleLoaded()) {
+      addClustering();
+    } else {
+      map.once("styledata", addClustering);
+    }
+
+    // Add click handlers (these only need to be added once when layers exist)
+    const handleClusterClick = (e: any) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ["clusters"],
       });
+      const clusterId = features[0]?.properties?.cluster_id;
+      if (clusterId !== undefined) {
+        (map.getSource("benches") as mapboxgl.GeoJSONSource).getClusterExpansionZoom(
+          clusterId,
+          (err, zoom) => {
+            if (err || zoom === null) return;
+            map.easeTo({
+              center: (features[0].geometry as any).coordinates,
+              zoom: zoom,
+            });
+          }
+        );
+      }
+    };
 
-      const marker = new mapboxgl.Marker({ element: el, offset: [0, -30] })
-        .setLngLat([bench.lng, bench.lat])
-        .addTo(map);
+    const handlePointClick = (e: any) => {
+      const coordinates = (e.features?.[0]?.geometry as any)?.coordinates?.slice();
+      const properties = e.features?.[0]?.properties;
       
-      markersRef.current.push(marker);
-    });
+      if (coordinates && properties) {
+        // Find the corresponding bench object
+        const bench = benches.find((b) => b.id === properties.id);
+        if (bench) {
+          onSelectBench(bench);
+        }
+      }
+    };
+
+    // Wait for layers to be added before attaching click handlers
+    const waitForLayers = () => {
+      if (map.getLayer("clusters") && map.getLayer("unclustered-point")) {
+        map.on("click", "clusters", handleClusterClick);
+        map.on("click", "unclustered-point", handlePointClick);
+        
+        map.on("mouseenter", "clusters", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "clusters", () => {
+          map.getCanvas().style.cursor = "";
+        });
+
+        map.on("mouseenter", "unclustered-point", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "unclustered-point", () => {
+          map.getCanvas().style.cursor = "";
+        });
+      } else {
+        // Check again in next frame
+        requestAnimationFrame(waitForLayers);
+      }
+    };
+
+    waitForLayers();
+
+    // Cleanup function
+    return () => {
+      map.off("styledata", addClustering);
+    };
   }, [map, benches, onSelectBench]);
+
 
   return <div ref={mapContainer} className="w-full h-[80vh] rounded-lg shadow-md" />;
 }
