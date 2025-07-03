@@ -5,9 +5,11 @@ import { createClient } from "@/app/utils/supabase/client";
 import mapboxgl from "mapbox-gl";
 import UserBar from "@/components/UserBar";
 import { useAuth } from "@/lib/supabase-provider";
+import { useRouter } from "next/navigation";
 
 export default function MyBenchesPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [benches, setBenches] = useState<any[]>([]);
   const [hoverCoords, setHoverCoords] = useState<{ lat: number; lng: number } | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -62,7 +64,7 @@ export default function MyBenchesPage() {
     if (!mapRef.current) return;
 
     benches.forEach((bench) => {
-      new mapboxgl.Marker({ color: "green" })
+      new mapboxgl.Marker({ color: bench.approved ? "green" : "yellow" })
         .setLngLat([bench.lng, bench.lat])
         .addTo(mapRef.current!);
     });
@@ -141,83 +143,136 @@ export default function MyBenchesPage() {
   };
 
   return (
-    <div className="p-4">
+    <div className="min-h-screen bg-gradient-subtle">
       <UserBar />
-      <h1 className="text-2xl font-bold mb-4">My Benches</h1>
-
-      {message && (
-        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-          {message}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        {benches.map((bench) => (
-          <div
-            key={bench.id}
-            className="bg-white p-4 rounded shadow hover:shadow-lg"
-            onClick={() => zoomToBench(bench.lat, bench.lng)}
-          >
-            <h2 className="text-lg font-semibold flex justify-between items-center">
-              {bench.name}
-              <span
-                className={`ml-2 px-2 py-1 text-xs rounded font-medium ${bench.approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
-              >
-                {bench.approved ? 'Approved' : 'Pending'}
-              </span>
-            </h2>
-            <p className="text-sm text-gray-600">{bench.description}</p>
-            {bench.image_url && (
-              <img
-                src={bench.image_url}
-                alt={bench.name}
-                className="mt-2 w-full h-32 object-cover rounded"
-              />
-            )}
-            <button
-              onClick={() => handleEdit(bench)}
-              className="mt-2 bg-blue-500 text-white px-4 py-1 rounded"
-            >
-              Edit
-            </button>
+      
+      <div className="py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-maroon-primary mb-4">My Benches</h1>
+            <p className="text-text-light text-lg">Manage your beautiful bench contributions</p>
+            <div className="w-24 h-1 bg-gradient-gold mx-auto rounded-full mt-4"></div>
           </div>
-        ))}
+
+          {message && (
+            <div className={`mb-6 p-4 rounded-lg text-sm max-w-2xl mx-auto ${
+              message.includes("Failed") || message.includes("failed")
+                ? 'bg-red-50 text-red-700 border border-red-200'
+                : 'bg-green-50 text-green-700 border border-green-200'
+            } animate-slide-up`}>
+              <div className="flex items-center">
+                <span className="mr-2">
+                  {message.includes("Failed") || message.includes("failed") ? "❌" : "✅"}
+                </span>
+                {message}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {benches.map((bench) => (
+              <div
+                key={bench.id}
+                className="card-elegant p-6 cursor-pointer group"
+                onClick={() => zoomToBench(bench.lat, bench.lng)}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-xl font-semibold text-text-dark group-hover:text-maroon-primary transition-colors duration-300">
+                    {bench.name}
+                  </h2>
+                  <span
+                    className={`px-3 py-1 text-xs rounded-full font-medium ${
+                      bench.approved 
+                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                        : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                    }`}
+                  >
+                    {bench.approved ? '✅ Approved' : '⏳ Pending'}
+                  </span>
+                </div>
+                
+                <p className="text-text-light mb-4 line-clamp-3">
+                  {bench.description || "No description provided"}
+                </p>
+                
+                {bench.image_url && (
+                  <img
+                    src={bench.image_url}
+                    alt={bench.name}
+                    className="w-full h-40 object-cover rounded-lg mb-4 group-hover:scale-105 transition-transform duration-300"
+                  />
+                )}
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(bench);
+                  }}
+                  className="w-full py-2 bg-gradient-gold text-maroon-primary font-medium rounded-lg hover:shadow-lg transition-all duration-300 hover:scale-105"
+                >
+                  <span className="mr-2">✏️</span>
+                  Edit Bench
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {editingBench && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Edit Bench</h2>
-            <input
-              name="name"
-              value={formState.name}
-              onChange={handleFormChange}
-              placeholder="Name"
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <textarea
-              name="description"
-              value={formState.description}
-              onChange={handleFormChange}
-              placeholder="Description"
-              className="w-full mb-2 p-2 border rounded"
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full mb-4 p-2 border rounded"
-            />
-            <div className="flex justify-end gap-2">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+          <div className="bg-gradient-subtle p-8 rounded-xl shadow-2xl w-full max-w-md animate-slide-up">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-maroon-primary mb-2">Edit Bench</h2>
+              <div className="w-16 h-1 bg-gradient-gold mx-auto rounded-full"></div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-dark mb-2">Name</label>
+                <input
+                  name="name"
+                  value={formState.name}
+                  onChange={handleFormChange}
+                  placeholder="Bench name"
+                  className="w-full px-4 py-3 border border-warm-gray rounded-lg text-text-dark placeholder-text-light focus:outline-none focus:ring-2 focus:ring-gold-primary focus:border-transparent transition-all duration-300"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-text-dark mb-2">Description</label>
+                <textarea
+                  name="description"
+                  value={formState.description}
+                  onChange={handleFormChange}
+                  placeholder="Describe your bench..."
+                  rows={3}
+                  className="w-full px-4 py-3 border border-warm-gray rounded-lg text-text-dark placeholder-text-light focus:outline-none focus:ring-2 focus:ring-gold-primary focus:border-transparent transition-all duration-300 resize-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-text-dark mb-2">Update Photo</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full px-4 py-3 border border-warm-gray rounded-lg text-text-dark file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gradient-gold file:text-maroon-primary file:font-medium hover:file:shadow-lg transition-all duration-300"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-8">
               <button
                 onClick={() => setEditingBench(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded"
+                className="flex-1 px-4 py-3 border-2 border-maroon-primary text-maroon-primary hover:bg-maroon-primary hover:text-white font-semibold rounded-lg transition-all duration-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                className="flex-1 px-4 py-3 bg-gradient-maroon text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
               >
                 Save Changes
               </button>
@@ -226,21 +281,57 @@ export default function MyBenchesPage() {
         </div>
       )}
 
-      <div
-        ref={mapContainerRef}
-        className="w-full h-[300px] rounded shadow"
-      />
+      <div className="mt-8">
+        <div className="card-elegant p-6 rounded-xl overflow-hidden">
+          <div className="mb-4 text-center">
+            <h3 className="text-xl font-semibold text-text-dark mb-2">
+              Your Bench Locations
+            </h3>
+            <p className="text-text-light">
+              Click on a bench card above to see it on the map
+            </p>
+          </div>
+          
+          <div className="rounded-xl overflow-hidden shadow-lg">
+            <div
+              ref={mapContainerRef}
+              className="w-full h-[400px]"
+            />
+          </div>
+        </div>
+      </div>
 
       {hoverCoords && (
-        <div className="absolute bottom-4 right-4 bg-white p-2 rounded shadow text-sm text-gray-700 z-50">
-          <strong>Lat:</strong> {hoverCoords.lat.toFixed(5)} | <strong>Lng:</strong> {hoverCoords.lng.toFixed(5)}
+        <div className="fixed bottom-6 right-6 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg text-sm text-text-dark z-50 border border-warm-gray">
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-text-gold">📍</span>
+            <span>
+              <strong>Lat:</strong> {hoverCoords.lat.toFixed(5)} | 
+              <strong> Lng:</strong> {hoverCoords.lng.toFixed(5)}
+            </span>
+          </div>
         </div>
       )}
 
       {benches.length === 0 && (
-        <p className="text-gray-500 text-center mt-8">
-          You haven't added any benches yet
-        </p>
+        <div className="text-center py-16">
+          <div className="max-w-md mx-auto">
+            <div className="w-24 h-24 bg-gradient-gold rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl">🪑</span>
+            </div>
+            <h3 className="text-2xl font-semibold text-text-dark mb-4">No Benches Yet</h3>
+            <p className="text-text-light mb-6">
+              You haven't added any benches yet. Start exploring and share your favorite spots!
+            </p>
+            <button 
+              onClick={() => router.push("/add-bench")}
+              className="px-6 py-3 bg-gradient-maroon text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+            >
+              <span className="mr-2">✨</span>
+              Add Your First Bench
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

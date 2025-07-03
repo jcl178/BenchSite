@@ -94,58 +94,81 @@ export default function MyBenchesPage() {
     }
 
     return (
-        <div className="p-4">
+        <div className="min-h-screen bg-gradient-subtle">
             <UserBar />
-        <h1 className="text-2xl font-bold mb-4">
-            {isAdmin ? "Pending Approval Benches" : "My Benches"}
-        </h1>
-        
-        {message && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {message}
-            </div>
-        )}
+            
+            <div className="py-8 px-4">
+                <div className="max-w-7xl mx-auto">
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold text-maroon-primary mb-4">
+                            {isAdmin ? "Bench Approval Center" : "My Benches"}
+                        </h1>
+                        <p className="text-text-light text-lg">
+                            {isAdmin ? "Review and approve community submissions" : "Manage your bench contributions"}
+                        </p>
+                        <div className="w-24 h-1 bg-gradient-gold mx-auto rounded-full mt-4"></div>
+                    </div>
+                    
+                    {message && (
+                        <div className="mb-6 p-4 rounded-lg text-sm max-w-2xl mx-auto bg-red-50 text-red-700 border border-red-200 animate-slide-up">
+                            <div className="flex items-center">
+                                <span className="mr-2">❌</span>
+                                {message}
+                            </div>
+                        </div>
+                    )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {benches.map((bench) => (
-            <div key={bench.id} className="bg-white rounded-lg shadow p-4">
-                {bench.image_url && (
-                <img 
-                    src={bench.image_url} 
-                    alt={bench.name}
-                    className="w-full h-48 object-cover rounded mb-2"
-                />
-                )}
-                <h2 className="text-xl text-gray-600 font-semibold">{bench.name}</h2>
-                <p className="text-gray-600 mb-2">{bench.description}</p>
-                <p className="text-sm text-gray-500 mb-4">
-                Location: {bench.lat}, {bench.lng}
-                </p>
-                <div className="flex gap-2">
-                {isAdmin && (
-                    <button
-                    onClick={(e) => handleApprove(bench.id, e)}
-                    className="bg-green-500 text-white px-4 py-2 rounded"
-                    >
-                    Approve
-                    </button>
-                )}
-                <button
-                    onClick={() => handleDelete(bench.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded"
-                >
-                    Delete
-                </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {benches.map((bench) => (
+                        <div key={bench.id} className="card-elegant p-6">
+                            {bench.image_url && (
+                            <img 
+                                src={bench.image_url} 
+                                alt={bench.name}
+                                className="w-full h-48 object-cover rounded-lg mb-4"
+                            />
+                            )}
+                            <h2 className="text-xl font-semibold text-text-dark mb-2">{bench.name}</h2>
+                            <p className="text-text-light mb-3 line-clamp-3">{bench.description}</p>
+                            <p className="text-sm text-text-gold mb-4 font-mono bg-warm-gray px-3 py-2 rounded-lg">
+                                📍 {bench.lat?.toFixed(4)}, {bench.lng?.toFixed(4)}
+                            </p>
+                            <div className="flex gap-2">
+                            {isAdmin && (
+                                <button
+                                onClick={(e) => handleApprove(bench.id, e)}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 shadow-md"
+                                >
+                                ✅ Approve
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleDelete(bench.id)}
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105 shadow-md"
+                            >
+                                🗑️ Delete
+                            </button>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+
+                    {benches.length === 0 && (
+                        <div className="text-center py-16">
+                            <div className="max-w-md mx-auto">
+                                <div className="w-24 h-24 bg-gradient-gold rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span className="text-4xl">✨</span>
+                                </div>
+                                <h3 className="text-2xl font-semibold text-text-dark mb-4">All Clear!</h3>
+                                <p className="text-text-light">
+                                    {isAdmin ? "No benches pending approval" : "You haven't added any benches yet"}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-            ))}
-        </div>
-
-        {benches.length === 0 && (
-            <p className="text-gray-500 text-center mt-8">
-            {isAdmin ? "No benches pending approval" : "You haven't added any benches yet"}
-            </p>
-        )}
         </div>
     );
 }

@@ -4,11 +4,46 @@
 @source "app/**/*.{js,ts,jsx,tsx,mdx}";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Maroon/Gold Color Palette */
+  --maroon-primary: #800020;
+  --maroon-secondary: #A0002A;
+  --maroon-accent: #B91036;
+  --maroon-light: #D4456B;
+  --gold-primary: #D4AF37;
+  --gold-light: #F7E98E;
+  --gold-dark: #B8860B;
+  --cream: #FFF8DC;
+  --warm-white: #FEFBF3;
+  --warm-gray: #F5F1E8;
+  --text-dark: #2C1810;
+  --text-light: #6B4E3D;
+  --text-gold: #8B6914;
+  
+  /* Background gradients */
+  --gradient-primary: linear-gradient(135deg, var(--maroon-primary) 0%, var(--maroon-secondary) 100%);
+  --gradient-gold: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-light) 100%);
+  --gradient-subtle: linear-gradient(135deg, var(--warm-white) 0%, var(--cream) 100%);
+  
+  --background: var(--warm-white);
+  --foreground: var(--text-dark);
 }
 
 @theme inline {
+  /* Custom Colors */
+  --color-maroon-primary: var(--maroon-primary);
+  --color-maroon-secondary: var(--maroon-secondary);
+  --color-maroon-accent: var(--maroon-accent);
+  --color-maroon-light: var(--maroon-light);
+  --color-gold-primary: var(--gold-primary);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-cream: var(--cream);
+  --color-warm-white: var(--warm-white);
+  --color-warm-gray: var(--warm-gray);
+  --color-text-dark: var(--text-dark);
+  --color-text-light: var(--text-light);
+  --color-text-gold: var(--text-gold);
+  
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -17,13 +52,85 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--text-dark);
+    --foreground: var(--cream);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+}
+
+/* Custom utility classes */
+.btn-primary {
+  @apply bg-maroon-primary hover:bg-maroon-secondary text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+}
+
+.btn-secondary {
+  @apply bg-gold-primary hover:bg-gold-dark text-maroon-primary font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+}
+
+.btn-outline {
+  @apply border-2 border-maroon-primary text-maroon-primary hover:bg-maroon-primary hover:text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300;
+}
+
+.card-elegant {
+  @apply bg-warm-white border border-warm-gray rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1;
+}
+
+.gradient-maroon {
+  background: var(--gradient-primary);
+}
+
+.gradient-gold {
+  background: var(--gradient-gold);
+}
+
+.gradient-subtle {
+  background: var(--gradient-subtle);
+}
+
+.text-gradient-gold {
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Improved scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--warm-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--maroon-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--maroon-primary);
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Custom focus styles */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: var(--gold-primary);
+  ring-opacity: 50%;
 }
